@@ -15,7 +15,7 @@ public class Inventory {
         double buyPrice = 1.29;
         double msrp = 5.99;
 
-        ProductDao productDao = new ProductDaoImpl();
+        ProductDao productDao = new ProductDao();
         boolean added = productDao.addProduct(productCode, productName, productLine, productScale, productVendor,
                 productDescription, quantityInStock, buyPrice, msrp);
 
