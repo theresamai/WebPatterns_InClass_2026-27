@@ -20,44 +20,52 @@ public class CustomerDaoImpl implements CustomerDao {
         Connector connector = new Connector();
         Connection conn = connector.getConnection();
         if (conn == null) {
-            System.out.println("No connection available");
+            System.out.println("No connection available!");
+            return customers;
         }
+
+        // Prepare statement - Write an SQL statement and compile it into something
+        // the database can actually run
         String sql = "SELECT * FROM customers WHERE customerName = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            // Populate placeholder
             ps.setString(1, name);
-
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Customer c = mapRow(rs);
-                customers.add(c);
+            // Run query - Execute the SQL that has been compiled and get the results
+            try (ResultSet rs = ps.executeQuery()) {
+                // Process results - loop through each row in resultset until it's empty
+                while (rs.next()) {
+                    // Extract pieces from the result row - we can explicitly ask for each piece by column name
+                    Customer customer = mapRow(rs);
+                    customers.add(customer);
+                }
+            } catch (SQLException e) {
+                System.out.println("Exception: \"" + e.getMessage() + "\"");
+                System.out.println("\tIssue occurred when processing query or results");
             }
-
         } catch (SQLException e) {
             System.out.println("Exception: \"" + e.getMessage() + "\"");
             System.out.println("\tCannot prepare statement: " + sql);
         }
+
         return customers;
     }
 
     private static @NonNull Customer mapRow(ResultSet rs) throws SQLException {
-        int customerNumber = rs.getInt("customerNumber");
-        String customerName = rs.getString("customerName");
-        String contactLastName = rs.getString("contactLastName");
-        String contactFirstName = rs.getString("contactFirstName");
-        String phone = rs.getString("phone");
-        String addressLine1 = rs.getString("addressLine1");
-        String addressLine2 = rs.getString("addressLine2");
-        String city = rs.getString("city");
-        String state = rs.getString("state");
-        String postalCode = rs.getString("postalCode");
-        String country = rs.getString("country");
-        Integer salesRepEmployeeNumber = rs.getInt("salesRepEmployeeNumber");
-        Double creditLimit = rs.getDouble("creditLimit");
-
-        Customer c = new Customer(customerNumber, customerName, contactLastName, contactFirstName, phone, addressLine1, addressLine2, city, state, postalCode, country, salesRepEmployeeNumber, creditLimit);
-        return c;
+        Customer customer = new Customer(
+                rs.getInt("customerNumber"),
+                rs.getString("customerName"),
+                rs.getString("contactLastName"),
+                rs.getString("contactFirstName"),
+                rs.getString("phone"),
+                rs.getString("addressLine1"),
+                rs.getString("addressLine2"),
+                rs.getString("city"),
+                rs.getString("state"),
+                rs.getString("postalCode"),
+                rs.getString("country"),
+                rs.getInt("salesRepEmployeeNumber"),
+                rs.getDouble("creditLimit")
+        );
+        return customer;
     }
     public List<Customer> selectCustomersContainingName(String name) {
         List<Customer> CustomerList = new ArrayList<>();
