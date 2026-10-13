@@ -68,55 +68,45 @@ public class CustomerDaoImpl implements CustomerDao {
         return customer;
     }
     public List<Customer> selectCustomersContainingName(String name) {
-        List<Customer> CustomerList = new ArrayList<>();
-        try {
-            // Load driver - pull in library of Java code to work with MySQL database
-            Class.forName(driver);
+        List<Customer> customers = new ArrayList<>();
 
-            // Connect to database - make a connection to the specified URL with the supplied credentials
-            try (Connection conn = DriverManager.getConnection(url, username, password)) {
-                // Prepare statement - Write an SQL statement and compile it into something
-                // the database can actually run
-                String sql = "SELECT * FROM customers WHERE customerName LIKE ?";
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    // Populate placeholder
-                    ps.setString(1, "%" + name + "%");
+        Connector connector = new Connector();
+        Connection conn = connector.getConnection();
 
-                    ResultSet rs = ps.executeQuery();
-
-                    while (rs.next()) {
-                        int customerNumber = rs.getInt("customerNumber");
-                        String customerName = rs.getString("customerName");
-                        String contactLastName = rs.getString("contactLastName");
-                        String contactFirstName = rs.getString("contactFirstName");
-                        String phone = rs.getString("phone");
-                        String addressLine1 = rs.getString("addressLine1");
-                        String addressLine2 = rs.getString("addressLine2");
-                        String city = rs.getString("city");
-                        String state = rs.getString("state");
-                        String postalCode = rs.getString("postalCode");
-                        String country = rs.getString("country");
-                        Integer salesRepEmployeeNumber = rs.getInt("salesRepEmployeeNumber");
-                        Double creditLimit = rs.getDouble("creditLimit");
-
-                        Customer c = new Customer(customerNumber, customerName, contactLastName, contactFirstName, phone, addressLine1, addressLine2, city, state, postalCode, country, salesRepEmployeeNumber, creditLimit);
-
-                        CustomerList.add(c);
-                    }
-
-                } catch (SQLException e) {
-                    System.out.println("Exception: \"" + e.getMessage() + "\"");
-                    System.out.println("\tCannot prepare statement: " + sql);
+        // Prepare statement - Write an SQL statement and compile it into something
+        // the database can actually run
+        String sql = "SELECT * FROM customers WHERE customerName LIKE ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, "%" + name + "%");
+            // Run query - Execute the SQL that has been compiled and get the results
+            try (ResultSet rs = ps.executeQuery()) {
+                // Process results - loop through each row in resultset until it's empty
+                while (rs.next()) {
+                    // Extract pieces from the result row - we can explicitly ask for each piece by column name
+                    Customer customer = mapRow(rs);
+                    customers.add(customer);
                 }
             } catch (SQLException e) {
                 System.out.println("Exception: \"" + e.getMessage() + "\"");
-                System.out.println("\tCannot establish a connection to " + url);
+                System.out.println("\tIssue occurred when processing query or results");
             }
-        } catch (ClassNotFoundException e) {
+        } catch (SQLException e) {
             System.out.println("Exception: \"" + e.getMessage() + "\"");
-            System.out.println("\tNo driver files found - please check dependencies.");
+            System.out.println("\tCannot prepare statement: " + sql);
         }
-        return CustomerList;
+        return customers;
+    }
+
+    static void main(String[] args) {
+        CustomerDao customerDao = new CustomerDaoImpl();
+        List<Customer> customers = customerDao.selectCustomersByName("Atelier Graphique");
+
+        System.out.println("Customers with matching Atelier Graphique:");
+        System.out.println(customers);
+
+        customers = customerDao.selectCustomersContainingName("Z");
+        System.out.println("Customers with name containing z:");
+        System.out.println(customers);
     }
 
     public Customer findCustomerById(int id) {
@@ -216,4 +206,5 @@ public class CustomerDaoImpl implements CustomerDao {
         }
         return false;
     }
+
 }

@@ -10,6 +10,8 @@ public class Connector {
     private String username = "root";
     private String password = "";
 
+    private Connection connection;
+
     public Connection getConnection (){
         try {
             // Load driver - pull in library of Java code to work with MySQL database
